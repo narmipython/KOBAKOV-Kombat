@@ -52,33 +52,32 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* Main wrapper */
+    /* Main content */
     #main {
       position: relative;
       width: 100%;
       height: 100%;
-      overflow: hidden;
       display: none;
-    }
-
-    /* Slider for 3 pages */
-    #slider {
-      display: flex;
-      width: 300%;
-      height: 100%;
-      transition: transform 0.4s ease;
+      overflow: hidden;
     }
 
     .screen {
-      flex: 0 0 100%;
-      height: 100%;
-      display: flex;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: calc(100% - 60px); /* leave space for bottom bar */
+      display: none;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
     }
 
-    /* Click button */
+    .screen.active {
+      display: flex;
+    }
+
+    /* Circle button */
     #circleBtn {
       width: 150px;
       height: 150px;
@@ -118,7 +117,7 @@
       display: flex;
       justify-content: space-around;
       align-items: center;
-      padding: 10px 0;
+      height: 60px;
       border-top: 1px solid #333;
       z-index: 5;
     }
@@ -151,27 +150,24 @@
 
   <div id="loading">
     <div class="spinner"></div>
-    KOBAKOV Kombat: Fight for 101 ping
+    KOBAKOV Kombat: Fight for 100 ping
   </div>
 
   <div id="main">
-    <div id="slider">
-      <!-- Left: Shop -->
-      <div class="screen" id="shopScreen">
-        <h1>🏪 Shop</h1>
-        <p>Buy power-ups and skins (coming soon)</p>
-      </div>
+    <!-- Screens -->
+    <div class="screen active" id="clickScreen">
+      <h1>💥 Clicker</h1>
+      <div id="circleBtn">Click</div>
+    </div>
 
-      <!-- Middle: Click -->
-      <div class="screen" id="clickScreen">
-        <div id="circleBtn">Click</div>
-      </div>
+    <div class="screen" id="shopScreen">
+      <h1>🏪 Shop</h1>
+      <p>Buy power-ups and skins (coming soon)</p>
+    </div>
 
-      <!-- Right: Upgrade -->
-      <div class="screen" id="upgradeScreen">
-        <h1>⚙️ Upgrade</h1>
-        <p>Upgrade your click strength here!</p>
-      </div>
+    <div class="screen" id="upgradeScreen">
+      <h1>⚙️ Upgrade</h1>
+      <p>Upgrade your click strength here!</p>
     </div>
 
     <!-- Bottom navigation -->
@@ -194,47 +190,34 @@
       }, 1500);
     });
 
-    // Page slider control
-    const slider = document.getElementById("slider");
+    // Switching screens
     const navBtns = document.querySelectorAll(".navBtn");
-    let currentIndex = 1; // start in middle
+    const screens = document.querySelectorAll(".screen");
 
-    function updateSlider() {
-      slider.style.transform = `translateX(-${currentIndex * 100}%)`;
-      navBtns.forEach(btn => btn.classList.remove("active"));
-      if (currentIndex === 0) document.getElementById("btnShop").classList.add("active");
-      if (currentIndex === 1) document.getElementById("btnClick").classList.add("active");
-      if (currentIndex === 2) document.getElementById("btnUpgrade").classList.add("active");
+    function showScreen(screenId) {
+      screens.forEach(s => s.classList.remove("active"));
+      document.getElementById(screenId).classList.add("active");
     }
 
-    document.getElementById("btnShop").onclick = () => { currentIndex = 0; updateSlider(); };
-    document.getElementById("btnClick").onclick = () => { currentIndex = 1; updateSlider(); };
-    document.getElementById("btnUpgrade").onclick = () => { currentIndex = 2; updateSlider(); };
+    function setActiveButton(btnId) {
+      navBtns.forEach(b => b.classList.remove("active"));
+      document.getElementById(btnId).classList.add("active");
+    }
 
-    // Swipe controls
-    let startX = 0;
-    let isDown = false;
+    document.getElementById("btnShop").onclick = () => {
+      showScreen("shopScreen");
+      setActiveButton("btnShop");
+    };
 
-    slider.addEventListener("touchstart", e => startX = e.touches[0].clientX);
-    slider.addEventListener("touchend", e => {
-      const diff = e.changedTouches[0].clientX - startX;
-      if (diff > 60 && currentIndex > 0) currentIndex--;
-      if (diff < -60 && currentIndex < 2) currentIndex++;
-      updateSlider();
-    });
+    document.getElementById("btnClick").onclick = () => {
+      showScreen("clickScreen");
+      setActiveButton("btnClick");
+    };
 
-    slider.addEventListener("mousedown", e => {
-      isDown = true;
-      startX = e.clientX;
-    });
-    slider.addEventListener("mouseup", e => {
-      if (!isDown) return;
-      isDown = false;
-      const diff = e.clientX - startX;
-      if (diff > 60 && currentIndex > 0) currentIndex--;
-      if (diff < -60 && currentIndex < 2) currentIndex++;
-      updateSlider();
-    });
+    document.getElementById("btnUpgrade").onclick = () => {
+      showScreen("upgradeScreen");
+      setActiveButton("btnUpgrade");
+    };
 
     // Click animation
     const circle = document.getElementById("circleBtn");
