@@ -7,16 +7,24 @@
   <style>
     * {
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent; /* removes blue tap glow on mobile */
     }
+
     body, html {
       margin: 0;
       padding: 0;
       height: 100%;
       width: 100%;
-      font-family: Arial, sans-serif;
-      background: #000;
+      font-family: "Segoe UI", Arial, sans-serif;
       color: #fff;
+      background: linear-gradient(160deg, #1e1f22 0%, #2a2d31 100%);
       overflow: hidden;
+      user-select: none; /* disable text selection */
+    }
+
+    button, div {
+      outline: none;
+      -webkit-focus-ring-color: transparent;
     }
 
     /* Loading screen */
@@ -26,7 +34,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: #000;
+      background: #1e1f22;
       color: #fff;
       display: flex;
       flex-direction: column;
@@ -39,7 +47,7 @@
 
     .spinner {
       border: 8px solid #333;
-      border-top: 8px solid #fff;
+      border-top: 8px solid #5865F2; /* Discord blue */
       border-radius: 50%;
       width: 80px;
       height: 80px;
@@ -52,59 +60,67 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* Main content */
+    /* Main container */
     #main {
-      position: relative;
       width: 100%;
       height: 100%;
       display: none;
-      overflow: hidden;
     }
 
-    .screen {
-      position: absolute;
+    /* Title bar */
+    .titleBar {
+      position: fixed;
       top: 0;
       left: 0;
       width: 100%;
-      height: calc(100% - 60px); /* leave space for bottom bar */
+      height: 60px;
+      background: rgba(32, 34, 37, 0.95);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 600;
+      color: #fff;
+      border-bottom: 1px solid #2b2d31;
+      z-index: 5;
+    }
+
+    /* Screens */
+    .screen {
+      position: absolute;
+      top: 60px; /* below title bar */
+      left: 0;
+      width: 100%;
+      height: calc(100% - 120px); /* leave space for title and bottom bar */
       display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      transition: opacity 0.3s;
     }
 
     .screen.active {
       display: flex;
     }
 
-    /* Circle button */
+    /* Circle click button */
     #circleBtn {
       width: 150px;
       height: 150px;
       border-radius: 50%;
-      background-color: #1e1e1e;
+      background-color: #2b2d31;
       display: flex;
       align-items: center;
       justify-content: center;
       color: #fff;
       font-size: 20px;
       cursor: pointer;
-      transition: background 0.3s ease;
-      user-select: none;
+      transition: transform 0.3s ease, background 0.3s ease;
     }
 
-    #circleBtn:hover {
-      background-color: #333;
-    }
-
-    .shrink-grow {
-      animation: shrinkGrow 0.4s ease-in-out 1 forwards;
-    }
-
-    @keyframes shrinkGrow {
-      0% { transform: scale(1); }
-      50% { transform: scale(0.7); }
-      100% { transform: scale(1); }
+    #circleBtn:active {
+      transform: scale(0.9);
+      background-color: #3a3d43;
     }
 
     /* Bottom bar */
@@ -113,36 +129,26 @@
       bottom: 0;
       left: 0;
       width: 100%;
-      background: rgba(20, 20, 20, 0.95);
+      background: rgba(32, 34, 37, 0.95);
       display: flex;
       justify-content: space-around;
       align-items: center;
       height: 60px;
-      border-top: 1px solid #333;
+      border-top: 1px solid #2b2d31;
       z-index: 5;
     }
 
     .navBtn {
       flex: 1;
       text-align: center;
-      color: #fff;
+      color: #b9bbbe;
       font-size: 18px;
       cursor: pointer;
       transition: color 0.3s;
     }
 
     .navBtn.active {
-      color: #00ff88;
-    }
-
-    h1 {
-      font-size: 28px;
-      margin-bottom: 10px;
-    }
-    p {
-      color: #bbb;
-      text-align: center;
-      max-width: 80%;
+      color: #5865F2; /* Discord blue highlight */
     }
   </style>
 </head>
@@ -154,23 +160,23 @@
   </div>
 
   <div id="main">
+    <!-- Title -->
+    <div class="titleBar" id="titleText">💥 Clicker</div>
+
     <!-- Screens -->
     <div class="screen active" id="clickScreen">
-      <h1>💥 Clicker</h1>
       <div id="circleBtn">Click</div>
     </div>
 
     <div class="screen" id="shopScreen">
-      <h1>🏪 Shop</h1>
-      <p>Buy power-ups and skins (coming soon)</p>
+      <p>🏪 Buy power-ups and skins (coming soon)</p>
     </div>
 
     <div class="screen" id="upgradeScreen">
-      <h1>⚙️ Upgrade</h1>
-      <p>Upgrade your click strength here!</p>
+      <p>⚙️ Upgrade your click strength here!</p>
     </div>
 
-    <!-- Bottom navigation -->
+    <!-- Bottom bar -->
     <div id="bottomBar">
       <div class="navBtn" id="btnShop">Shop</div>
       <div class="navBtn active" id="btnClick">Click</div>
@@ -190,13 +196,14 @@
       }, 1500);
     });
 
-    // Switching screens
     const navBtns = document.querySelectorAll(".navBtn");
     const screens = document.querySelectorAll(".screen");
+    const title = document.getElementById("titleText");
 
-    function showScreen(screenId) {
+    function showScreen(screenId, titleText) {
       screens.forEach(s => s.classList.remove("active"));
       document.getElementById(screenId).classList.add("active");
+      title.textContent = titleText;
     }
 
     function setActiveButton(btnId) {
@@ -205,27 +212,25 @@
     }
 
     document.getElementById("btnShop").onclick = () => {
-      showScreen("shopScreen");
+      showScreen("shopScreen", "🏪 Shop");
       setActiveButton("btnShop");
     };
 
     document.getElementById("btnClick").onclick = () => {
-      showScreen("clickScreen");
+      showScreen("clickScreen", "💥 Clicker");
       setActiveButton("btnClick");
     };
 
     document.getElementById("btnUpgrade").onclick = () => {
-      showScreen("upgradeScreen");
+      showScreen("upgradeScreen", "⚙️ Upgrade");
       setActiveButton("btnUpgrade");
     };
 
     // Click animation
     const circle = document.getElementById("circleBtn");
     circle.addEventListener("click", () => {
-      circle.classList.add("shrink-grow");
-      circle.addEventListener("animationend", () => {
-        circle.classList.remove("shrink-grow");
-      }, { once: true });
+      circle.style.transform = "scale(0.85)";
+      setTimeout(() => circle.style.transform = "scale(1)", 150);
     });
   </script>
 </body>
